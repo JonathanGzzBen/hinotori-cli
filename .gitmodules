@@ -1,0 +1,3 @@
+[submodule "libs/hinotori-core"]
+	path = libs/hinotori-core
+	url = git@github.com:JonathanGzzBen/hinotori-core.git
