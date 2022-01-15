@@ -2,12 +2,14 @@
 
 #include <QCoreApplication>
 
+#include "commandlineinterface.h"
+
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
 
-  Question question{
-      "Which is the best operating system?", 0, {"Linux", "Windows", "MacOS"}};
-  qInfo() << question.Message();
+  CommandLineInterface cli{};
+  QObject::connect(&cli, &CommandLineInterface::Quit, &a, &QCoreApplication::quit, Qt::ConnectionType::QueuedConnection);
+  cli.Start();
 
   return a.exec();
 }

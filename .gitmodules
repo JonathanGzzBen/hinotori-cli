@@ -1,3 +1,6 @@
 [submodule "libs/hinotori-core"]
 	path = libs/hinotori-core
 	url = git@github.com:JonathanGzzBen/hinotori-core.git
+[submodule "libs/linenoise"]
+	path = libs/linenoise
+	url = https://github.com/antirez/linenoise.git
