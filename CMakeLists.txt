@@ -12,12 +12,16 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(libs/hinotori-core)
+add_subdirectory(libs/cli)
 include_directories(libs/hinotori-core/include)
+include_directories(libs/cli/include)
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)
 
 add_executable(hinotori-cli
   src/main.cpp
+  src/commandlineinterface.h
+  src/commandlineinterface.cpp
 )
 target_link_libraries(hinotori-cli hinotori-core Qt${QT_VERSION_MAJOR}::Core)

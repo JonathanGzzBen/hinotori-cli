@@ -1,3 +1,6 @@
 [submodule "libs/hinotori-core"]
 	path = libs/hinotori-core
 	url = git@github.com:JonathanGzzBen/hinotori-core.git
+[submodule "libs/cli"]
+	path = libs/cli
+	url = https://github.com/daniele77/cli.git
