@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-CommandLineInterface::CommandLineInterface(QObject *parent)
-    : QObject{parent} {}
+CommandLineInterface::CommandLineInterface(QObject *parent) : QObject{parent} {}
 
 void CommandLineInterface::Start() {
   const char *line;
@@ -14,7 +13,7 @@ void CommandLineInterface::Start() {
 
   QTextStream out(stdout);
   while ((line = linenoise("hinotori> ")) != nullptr) {
-    if (!strncmp(line, "quit", 5) || !strncmp(line, "exit", 5)) {
+    if (!strncmp(line, "quit", 4) || !strncmp(line, "exit", 4)) {
       out << "See you later.\n";
       linenoiseHistoryAdd(line);
       break;
@@ -25,7 +24,7 @@ void CommandLineInterface::Start() {
         DisplayQuestionnaires(out);
       }
       linenoiseHistoryAdd(line);
-    } else if (!strncmp(line, "clear", 6)) {
+    } else if (!strncmp(line, "clear", 5)) {
       linenoiseClearScreen();
       linenoiseHistoryAdd(line);
     }
@@ -46,6 +45,7 @@ char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   if (!strcasecmp(buf, "question")) {
     *color = 35;
     *bold = 0;
+
     return "naires";
   }
   return nullptr;
@@ -56,8 +56,8 @@ void CommandLineInterface::DisplayQuestionnaires(QTextStream &out) const {
   out << "\n";
   for (const auto &file : files_in_data_directory) {
     out << "Filename: " << file << "\n";
-    if (Questionnaire questionnaire;Questionnaire::LoadQuestionnaire(questionnaire,
-                                                                     k_data_directory_.filePath(file))) {
+    if (Questionnaire questionnaire; Questionnaire::LoadQuestionnaire(
+            questionnaire, k_data_directory_.filePath(file))) {
       out << "Title: " << questionnaire.Title() << "\n";
       out << "Author: " << questionnaire.Author() << "\n";
       out << "Number of questions: " << questionnaire.Questions().length()
