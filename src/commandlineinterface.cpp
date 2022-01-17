@@ -3,16 +3,13 @@
 #include <iostream>
 
 CommandLineInterface::CommandLineInterface(QObject *parent)
-    : QObject{parent},
-      kDataDirectory{QStandardPaths::writableLocation(
-                         QStandardPaths::GenericDataLocation) +
-                     QDir::separator() + "hinotori"} {}
+    : QObject{parent} {}
 
 void CommandLineInterface::Start() {
-  char *line;
+  const char *line;
 
-  linenoiseSetCompletionCallback(completion);
-  linenoiseSetHintsCallback(hints);
+  linenoiseSetCompletionCallback(Completion);
+  linenoiseSetHintsCallback(Hints);
   linenoiseHistorySetMaxLen(10);
 
   QTextStream out(stdout);
@@ -22,24 +19,10 @@ void CommandLineInterface::Start() {
       linenoiseHistoryAdd(line);
       break;
     } else if (!strncmp(line, "questionnaires", 9)) {
-      if (!kDataDirectory.exists()) {
-        out << "No data found in " << kDataDirectory.path() << "\n";
+      if (!k_data_directory_.exists()) {
+        out << "No data found in " << k_data_directory_.path() << "\n";
       } else {
-        auto filesInDataDirectory{
-            kDataDirectory.entryList(QDir::Files | QDir::Readable)};
-        out << "\n";
-        for (const auto &file : filesInDataDirectory) {
-          out << "Filename: " << file << "\n";
-          Questionnaire questionnaire;
-          if (Questionnaire::LoadQuestionnaire(questionnaire,
-                                               kDataDirectory.filePath(file))) {
-            out << "Title: " << questionnaire.Title() << "\n";
-            out << "Author: " << questionnaire.Author() << "\n";
-            out << "Number of questions: " << questionnaire.Questions().length()
-                << "\n";
-          }
-          out << "\n";
-        }
+        DisplayQuestionnaires(out);
       }
       linenoiseHistoryAdd(line);
     } else if (!strncmp(line, "clear", 6)) {
@@ -51,7 +34,7 @@ void CommandLineInterface::Start() {
   emit Quit();
 }
 
-void CommandLineInterface::completion(const char *buf,
+void CommandLineInterface::Completion(const char *buf,
                                       linenoiseCompletions *lc) {
   if (buf[0] == 'q') {
     linenoiseAddCompletion(lc, "question");
@@ -59,11 +42,27 @@ void CommandLineInterface::completion(const char *buf,
   }
 }
 
-char *CommandLineInterface::hints(const char *buf, int *color, int *bold) {
+char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   if (!strcasecmp(buf, "question")) {
     *color = 35;
     *bold = 0;
     return "naires";
   }
   return nullptr;
+}
+void CommandLineInterface::DisplayQuestionnaires(QTextStream &out) const {
+  auto files_in_data_directory{
+      k_data_directory_.entryList(QDir::Files | QDir::Readable)};
+  out << "\n";
+  for (const auto &file : files_in_data_directory) {
+    out << "Filename: " << file << "\n";
+    if (Questionnaire questionnaire;Questionnaire::LoadQuestionnaire(questionnaire,
+                                                                     k_data_directory_.filePath(file))) {
+      out << "Title: " << questionnaire.Title() << "\n";
+      out << "Author: " << questionnaire.Author() << "\n";
+      out << "Number of questions: " << questionnaire.Questions().length()
+          << "\n";
+    }
+    out << "\n";
+  }
 }

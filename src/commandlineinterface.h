@@ -20,14 +20,18 @@ class CommandLineInterface : public QObject {
   void Start();
 
  private:
-  static void completion(const char *buf, linenoiseCompletions *lc);
+  static void Completion(const char *buf, linenoiseCompletions *lc);
 
-  static char *hints(const char *buf, int *color, int *bold);
+  static char *Hints(const char *buf, int *color, int *bold);
 
-  const QDir kDataDirectory;
+  void DisplayQuestionnaires(QTextStream& out) const;
+
+  const QDir k_data_directory_{QStandardPaths::writableLocation(
+      QStandardPaths::GenericDataLocation) +
+      QDir::separator() + "hinotori"};
 
  signals:
-  void Quit(int returnCode = 0);
+  void Quit(int return_code = 0);
 };
 
 #endif  // COMMANDLINEINTERFACE_H
