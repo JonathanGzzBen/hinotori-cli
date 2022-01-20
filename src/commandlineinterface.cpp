@@ -45,6 +45,7 @@ void CommandLineInterface::Start() {
       }
       out << "Answering questionnaire " << questionnaire_number << "\n";
       AnswerQuestionnaire(out, questionnaire_number);
+      linenoiseHistoryAdd(line);
     } else if (!strncmp(line, "clear", 5)) {
       linenoiseClearScreen();
       linenoiseHistoryAdd(line);
