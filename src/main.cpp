@@ -11,8 +11,17 @@ int main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("hinotori-cli");
 
   CommandLineInterface cli{};
-  QObject::connect(&cli, &CommandLineInterface::Quit, &a, &QCoreApplication::quit, Qt::ConnectionType::QueuedConnection);
-  cli.Start();
+  QObject::connect(&cli, &CommandLineInterface::Quit, &a,
+                   &QCoreApplication::quit,
+                   Qt::ConnectionType::QueuedConnection);
+
+  if (argc > 1 && strncmp(argv[1], "--version", 9) == 0) {
+    QTextStream out{stdout};
+    out << "hinotori v1.0.0\n";
+    return 0;
+  } else {
+    cli.Start();
+  }
 
   return a.exec();
 }
