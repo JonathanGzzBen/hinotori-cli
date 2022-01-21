@@ -25,12 +25,14 @@ class CommandLineInterface : public QObject {
   static char *Hints(const char *buf, int *color, int *bold);
 
   QList<QSharedPointer<Questionnaire>> LoadQuestionnaires() const;
-  QSharedPointer<Questionnaire> LoadQuestionnaire(quint8 questionnaire_number) const;
+  QSharedPointer<Questionnaire> LoadQuestionnaire(
+      quint8 questionnaire_number) const;
 
   void DisplayQuestionnaires(QTextStream &out) const;
   void DisplayQuestions(QTextStream &out, quint8 questionnaire_number) const;
   void AnswerQuestionnaire(QTextStream &out, quint8 questionnaire_number) const;
   void CreateQuestionnaire(QTextStream &out, QString filename) const;
+  void DisplayHelp(QTextStream &out, QString command);
 
   static bool AnswerQuestion(QTextStream &out,
                              QSharedPointer<Question> question, bool &exit);

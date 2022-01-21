@@ -58,6 +58,9 @@ void CommandLineInterface::Start() {
                                    ? input_filename
                                    : input_filename + ".json");
       linenoiseHistoryAdd(line);
+    } else if (strncmp(line, "help", 4) == 0) {
+      DisplayHelp(out, line + 4);
+      linenoiseHistoryAdd(line);
     } else if (!strncmp(line, "clear", 5)) {
       linenoiseClearScreen();
       linenoiseHistoryAdd(line);
@@ -73,8 +76,16 @@ void CommandLineInterface::Completion(const char *buf,
     linenoiseAddCompletion(lc, "questions");
     linenoiseAddCompletion(lc, "questionnaires");
   }
-  constexpr char *hints[] = {"", "answer", "questions", "questionnaires",
-                             "create"};
+  constexpr char *hints[] = {"",
+                             "answer",
+                             "questions",
+                             "questionnaires",
+                             "create",
+                             "help",
+                             "help answer",
+                             "help questions",
+                             "help questionnaires",
+                             "help create"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       linenoiseAddCompletion(lc, hint);
@@ -85,8 +96,16 @@ void CommandLineInterface::Completion(const char *buf,
 char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   *color = 35;
   *bold = 0;
-  constexpr char *hints[] = {"", "answer", "questions", "questionnaires",
-                             "create"};
+  constexpr char *hints[] = {"",
+                             "answer",
+                             "questions",
+                             "questionnaires",
+                             "create",
+                             "help",
+                             "help answer",
+                             "help questions",
+                             "help questionnaires",
+                             "help create"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       return hint + strlen(buf);
@@ -227,6 +246,25 @@ void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
                               questions};
   if (Questionnaire::SaveQuestionnaire(questionnaire, file.fileName())) {
     out << "Created questionnaire in: " << file.fileName() << "\n";
+  }
+}
+
+void CommandLineInterface::DisplayHelp(QTextStream &out, QString command) {
+  command = command.trimmed();
+  if (command == "questionnaires") {
+    out << "questionnaires\nDisplay all stored questionnaires\n\n";
+  } else if (command == "questions") {
+    out << "questions <questionnaire_number>\nDisplay all questions in a "
+           "questionnaire\n\n";
+  } else if (command == "answer") {
+    out << "answer <questionnaire_number>\nStart answering questionnaire\n\n";
+  } else if (command == "create") {
+    out << "create <questionnaire_name>\nCreate a questionnaire\n\n";
+  } else if (command == "exit") {
+    out << "exit\nExit hinotori\n\n";
+  } else {
+    out << "help <command>\nAvailable commands:"
+           "\nquestionnaires\nquestions\nanswer\ncreate\nexit\n\n";
   }
 }
 
