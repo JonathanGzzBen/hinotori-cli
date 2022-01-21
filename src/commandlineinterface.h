@@ -30,6 +30,7 @@ class CommandLineInterface : public QObject {
   void DisplayQuestionnaires(QTextStream &out) const;
   void DisplayQuestions(QTextStream &out, quint8 questionnaire_number) const;
   void AnswerQuestionnaire(QTextStream &out, quint8 questionnaire_number) const;
+  void CreateQuestionnaire(QTextStream &out, QString filename) const;
 
   static bool AnswerQuestion(QTextStream &out,
                              QSharedPointer<Question> question, bool &exit);

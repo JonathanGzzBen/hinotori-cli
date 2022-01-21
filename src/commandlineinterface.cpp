@@ -46,6 +46,18 @@ void CommandLineInterface::Start() {
       out << "Answering questionnaire " << questionnaire_number << "\n";
       AnswerQuestionnaire(out, questionnaire_number);
       linenoiseHistoryAdd(line);
+    } else if (strncmp(line, "create", 6) == 0) {
+      QString input_filename{line + 6};
+      if (input_filename.isEmpty()) {
+        out << "Expected argument <questionnary_name>\n\n";
+        out.flush();
+        continue;
+      }
+      input_filename = input_filename.trimmed();
+      CreateQuestionnaire(out, input_filename.endsWith(".json")
+                                   ? input_filename
+                                   : input_filename + ".json");
+      linenoiseHistoryAdd(line);
     } else if (!strncmp(line, "clear", 5)) {
       linenoiseClearScreen();
       linenoiseHistoryAdd(line);
@@ -61,7 +73,8 @@ void CommandLineInterface::Completion(const char *buf,
     linenoiseAddCompletion(lc, "questions");
     linenoiseAddCompletion(lc, "questionnaires");
   }
-  constexpr char *hints[] = {"", "answer", "questions", "questionnaires"};
+  constexpr char *hints[] = {"", "answer", "questions", "questionnaires",
+                             "create"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       linenoiseAddCompletion(lc, hint);
@@ -72,7 +85,8 @@ void CommandLineInterface::Completion(const char *buf,
 char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   *color = 35;
   *bold = 0;
-  constexpr char *hints[] = {"", "answer", "questions", "questionnaires"};
+  constexpr char *hints[] = {"", "answer", "questions", "questionnaires",
+                             "create"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       return hint + strlen(buf);
@@ -194,6 +208,26 @@ void CommandLineInterface::AnswerQuestionnaire(
     out << "]\n";
   }
   out.flush();
+}
+
+void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
+                                               QString filename) const {
+  QFile file{k_data_directory_.filePath(filename)};
+  if (file.exists()) {
+    out << "There is already a questionnaire with that filename\n";
+    return;
+  }
+  QList<QSharedPointer<Question>> questions;
+  questions.append(QSharedPointer<Question>{new Question(
+      "Sample question 1", 1,
+      {"Incorrect Answer 1", "Correct Answer", "Incorrect Answer"})});
+  questions.append(QSharedPointer<Question>{new Question(
+      "Sample question 2", 0, {"Correct Answer", "Incorrect Answer"})});
+  Questionnaire questionnaire{filename.trimmed(), QDir::home().dirName(),
+                              questions};
+  if (Questionnaire::SaveQuestionnaire(questionnaire, file.fileName())) {
+    out << "Created questionnaire in: " << file.fileName() << "\n";
+  }
 }
 
 bool CommandLineInterface::AnswerQuestion(QTextStream &out,
