@@ -85,7 +85,8 @@ void CommandLineInterface::Completion(const char *buf,
                              "help answer",
                              "help questions",
                              "help questionnaires",
-                             "help create"};
+                             "help create",
+                             "exit"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       linenoiseAddCompletion(lc, hint);
@@ -105,7 +106,8 @@ char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
                              "help answer",
                              "help questions",
                              "help questionnaires",
-                             "help create"};
+                             "help create",
+                             "exit"};
   for (const auto &hint : hints) {
     if (strncmp(buf, hint, strlen(buf)) == 0) {
       return hint + strlen(buf);
@@ -231,6 +233,11 @@ void CommandLineInterface::AnswerQuestionnaire(
 
 void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
                                                QString filename) const {
+  if (!k_data_directory_.exists()) {
+    const QDir generic_data_location{
+        QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)};
+    generic_data_location.mkdir("hinotori");
+  }
   QFile file{k_data_directory_.filePath(filename)};
   if (file.exists()) {
     out << "There is already a questionnaire with that filename\n";
