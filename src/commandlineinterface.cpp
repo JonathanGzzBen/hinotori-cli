@@ -4,70 +4,60 @@
 CommandLineInterface::CommandLineInterface(QObject *parent) : QObject{parent} {}
 
 void CommandLineInterface::Start() {
-  const char *line;
-
   linenoiseSetCompletionCallback(Completion);
   linenoiseSetHintsCallback(Hints);
   linenoiseHistorySetMaxLen(10);
 
   QTextStream out(stdout);
+  QString line;
   while ((line = linenoise("hinotori> ")) != nullptr) {
-    if (!strncmp(line, "quit", 4) || !strncmp(line, "exit", 4)) {
-      out << "See you later.\n";
-      linenoiseHistoryAdd(line);
+    if (line == "quit" || line == "exit") {
+      out << "See you later.\n\n";
       break;
-    } else if (!strncmp(line, "questionnaires", 9)) {
+    } else if (line == "questionnaires") {
       if (!k_data_directory_.exists()) {
         out << "No data found in " << k_data_directory_.path() << "\n";
       } else {
         DisplayQuestionnaires(out);
       }
-      linenoiseHistoryAdd(line);
-    } else if (!strncmp(line, "questions", 9)) {
-      quint8 questionnaire_number{0};
-      try {
-        questionnaire_number = std::stoi(line + 9);
-      } catch (...) {
+      linenoiseHistoryAdd(line.toStdString().c_str());
+    } else if (line.startsWith("questions")) {
+      bool ok;
+      auto questionnaire_number{line.sliced(9).toUInt(&ok)};
+      if (!ok) {
         out << "Expected numeric argument <questionnaire_number>\n\n";
-        out.flush();
-        continue;
+      } else {
+        DisplayQuestions(out, questionnaire_number);
+        linenoiseHistoryAdd(line.toStdString().c_str());
       }
-      DisplayQuestions(out, questionnaire_number);
-      linenoiseHistoryAdd(line);
-    } else if (strncmp(line, "answer", 6) == 0) {
-      quint8 questionnaire_number{0};
-      try {
-        questionnaire_number = std::stoi(line + 6);
-      } catch (...) {
+    } else if (line.startsWith("answer")) {
+      bool ok;
+      auto questionnaire_number{line.sliced(6).toUInt(&ok)};
+      if (!ok) {
         out << "Expected numeric argument <questionnaire_number>\n\n";
-        out.flush();
-        continue;
+      } else {
+        out << "Answering questionnaire " << questionnaire_number << "\n";
+        AnswerQuestionnaire(out, questionnaire_number);
+        linenoiseHistoryAdd(line.toStdString().c_str());
       }
-      out << "Answering questionnaire " << questionnaire_number << "\n";
-      AnswerQuestionnaire(out, questionnaire_number);
-      linenoiseHistoryAdd(line);
-    } else if (strncmp(line, "create", 6) == 0) {
-      QString input_filename{line + 6};
+    } else if (line.startsWith("create")) {
+      QString input_filename{line.sliced(6)};
       if (input_filename.isEmpty()) {
         out << "Expected argument <questionnary_name>\n\n";
-        out.flush();
-        continue;
+      } else {
+        input_filename = input_filename.trimmed();
+        CreateQuestionnaire(out, input_filename.endsWith(".json")
+                                     ? input_filename
+                                     : input_filename + ".json");
       }
-      input_filename = input_filename.trimmed();
-      CreateQuestionnaire(out, input_filename.endsWith(".json")
-                                   ? input_filename
-                                   : input_filename + ".json");
-      linenoiseHistoryAdd(line);
-    } else if (strncmp(line, "path", 4) == 0) {
-      DisplayPath(out, line + 4);
-      linenoiseHistoryAdd(line);
-    } else if (strncmp(line, "help", 4) == 0) {
-      DisplayHelp(out, line + 4);
-      linenoiseHistoryAdd(line);
-    } else if (!strncmp(line, "clear", 5)) {
+    } else if (line.startsWith("path")) {
+      DisplayPath(out, line.sliced(4));
+    } else if (line.startsWith("help")) {
+      DisplayHelp(out, line.sliced(4));
+    } else if (line.startsWith("clear")) {
       linenoiseClearScreen();
-      linenoiseHistoryAdd(line);
     }
+    linenoiseHistoryAdd(line.toStdString().c_str());
     out.flush();
   }
   emit Quit();
@@ -75,26 +65,22 @@ void CommandLineInterface::Start() {
 
 void CommandLineInterface::Completion(const char *buf,
                                       linenoiseCompletions *lc) {
-  if (buf[0] == 'q') {
-    linenoiseAddCompletion(lc, "questions");
-    linenoiseAddCompletion(lc, "questionnaires");
-  }
-  constexpr char *hints[] = {"",
-                             "answer",
-                             "questions",
-                             "questionnaires",
-                             "create",
-                             "path",
-                             "help",
-                             "help answer",
-                             "help questions",
-                             "help questionnaires",
-                             "help path",
-                             "help create",
-                             "exit"};
+  QString hints[] = {"",
+                     "answer",
+                     "questions",
+                     "questionnaires",
+                     "create",
+                     "path",
+                     "help",
+                     "help answer",
+                     "help questions",
+                     "help questionnaires",
+                     "help path",
+                     "help create",
+                     "exit"};
   for (const auto &hint : hints) {
-    if (strncmp(buf, hint, strlen(buf)) == 0) {
-      linenoiseAddCompletion(lc, hint);
+    if (hint.startsWith(buf)) {
+      linenoiseAddCompletion(lc, hint.toStdString().c_str());
     }
   }
 }
@@ -102,22 +88,26 @@ void CommandLineInterface::Completion(const char *buf,
 char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   *color = 35;
   *bold = 0;
-  constexpr char *hints[] = {"",
-                             "answer",
-                             "questions",
-                             "questionnaires",
-                             "create",
-                             "path",
-                             "help",
-                             "help answer",
-                             "help questions",
-                             "help questionnaires",
-                             "help path",
-                             "help create",
-                             "exit"};
+  QString hints[] = {"",
+                     "answer",
+                     "questions",
+                     "questionnaires",
+                     "create",
+                     "path",
+                     "help",
+                     "help answer",
+                     "help questions",
+                     "help questionnaires",
+                     "help path",
+                     "help create",
+                     "exit"};
   for (const auto &hint : hints) {
-    if (strncmp(buf, hint, strlen(buf)) == 0) {
-      return hint + strlen(buf);
+    if (hint.startsWith(buf)) {
+      static char *hint_substring;
+      std::strncpy(hint_substring,
+                   hint.sliced(strlen(buf)).toStdString().c_str(),
+                   hint.length() - strlen(buf) + 1);
+      return hint_substring;
     }
   }
   return nullptr;
