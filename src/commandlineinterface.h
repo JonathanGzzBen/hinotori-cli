@@ -15,24 +15,25 @@
 
 class CommandLineInterface : public QObject {
   Q_OBJECT
- public:
+public:
   explicit CommandLineInterface(QObject *parent = nullptr);
   void Start();
 
- private:
+private:
   static void Completion(const char *buf, linenoiseCompletions *lc);
 
   static char *Hints(const char *buf, int *color, int *bold);
 
   QList<QSharedPointer<Questionnaire>> LoadQuestionnaires() const;
-  QSharedPointer<Questionnaire> LoadQuestionnaire(
-      quint8 questionnaire_number) const;
+  QSharedPointer<Questionnaire>
+  LoadQuestionnaire(quint8 questionnaire_number) const;
 
   void DisplayQuestionnaires(QTextStream &out) const;
   void DisplayQuestions(QTextStream &out, quint8 questionnaire_number) const;
   void AnswerQuestionnaire(QTextStream &out, quint8 questionnaire_number) const;
   void CreateQuestionnaire(QTextStream &out, QString filename) const;
-  void DisplayHelp(QTextStream &out, QString command);
+  void DisplayPath(QTextStream &out, QString questionnaire_number) const;
+  void DisplayHelp(QTextStream &out, QString command) const;
 
   static bool AnswerQuestion(QTextStream &out,
                              QSharedPointer<Question> question, bool &exit);
@@ -41,8 +42,8 @@ class CommandLineInterface : public QObject {
       QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) +
       QDir::separator() + "hinotori"};
 
- signals:
+signals:
   void Quit(int return_code = 0);
 };
 
-#endif  // COMMANDLINEINTERFACE_H
+#endif // COMMANDLINEINTERFACE_H

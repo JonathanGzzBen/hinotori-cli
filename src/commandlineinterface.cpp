@@ -58,6 +58,9 @@ void CommandLineInterface::Start() {
                                    ? input_filename
                                    : input_filename + ".json");
       linenoiseHistoryAdd(line);
+    } else if (strncmp(line, "path", 4) == 0) {
+      DisplayPath(out, line + 4);
+      linenoiseHistoryAdd(line);
     } else if (strncmp(line, "help", 4) == 0) {
       DisplayHelp(out, line + 4);
       linenoiseHistoryAdd(line);
@@ -81,10 +84,12 @@ void CommandLineInterface::Completion(const char *buf,
                              "questions",
                              "questionnaires",
                              "create",
+                             "path",
                              "help",
                              "help answer",
                              "help questions",
                              "help questionnaires",
+                             "help path",
                              "help create",
                              "exit"};
   for (const auto &hint : hints) {
@@ -102,10 +107,12 @@ char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
                              "questions",
                              "questionnaires",
                              "create",
+                             "path",
                              "help",
                              "help answer",
                              "help questions",
                              "help questionnaires",
+                             "help path",
                              "help create",
                              "exit"};
   for (const auto &hint : hints) {
@@ -116,8 +123,8 @@ char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
   return nullptr;
 }
 
-QList<QSharedPointer<Questionnaire>> CommandLineInterface::LoadQuestionnaires()
-    const {
+QList<QSharedPointer<Questionnaire>>
+CommandLineInterface::LoadQuestionnaires() const {
   QList<QSharedPointer<Questionnaire>> questionnaires;
   for (auto files_in_data_directory{
            k_data_directory_.entryList(QDir::Files | QDir::Readable)};
@@ -132,8 +139,8 @@ QList<QSharedPointer<Questionnaire>> CommandLineInterface::LoadQuestionnaires()
   return questionnaires;
 }
 
-QSharedPointer<Questionnaire> CommandLineInterface::LoadQuestionnaire(
-    quint8 questionnaire_number) const {
+QSharedPointer<Questionnaire>
+CommandLineInterface::LoadQuestionnaire(quint8 questionnaire_number) const {
   const auto questionnaires{LoadQuestionnaires()};
   if (questionnaires.empty()) {
     return nullptr;
@@ -148,6 +155,7 @@ void CommandLineInterface::DisplayQuestionnaires(QTextStream &out) const {
     out.flush();
     return;
   }
+  out << "Questionnaires in: " << k_data_directory_.path() << "\n";
   for (quint8 questionnaire_number{1};
        const auto &questionnaire : questionnaires) {
     out << "\nQuestionnaire " << questionnaire_number++ << "\n";
@@ -256,7 +264,28 @@ void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
   }
 }
 
-void CommandLineInterface::DisplayHelp(QTextStream &out, QString command) {
+void CommandLineInterface::DisplayPath(QTextStream &out,
+                                       QString questionnaire_number) const {
+  bool ok;
+  auto questionnaire_number_uint = questionnaire_number.toUInt(&ok);
+  if (!ok) {
+    out << "Questionnaire number must be a valid number\n\n";
+    return;
+  }
+  auto questionnaires{LoadQuestionnaires()};
+  for (uint i{0}; i < questionnaires.length(); ++i) {
+    if (i + 1 == questionnaire_number_uint) {
+      out << k_data_directory_.path() + QDir::separator() +
+                 questionnaires[i].get()->Title() + "\n\n";
+      return;
+    }
+  }
+  out << "Questionnaire number " + questionnaire_number.trimmed() +
+             " not found\n\n";
+}
+
+void CommandLineInterface::DisplayHelp(QTextStream &out,
+                                       QString command) const {
   command = command.trimmed();
   if (command == "questionnaires") {
     out << "questionnaires\nDisplay all stored questionnaires\n\n";
@@ -267,11 +296,13 @@ void CommandLineInterface::DisplayHelp(QTextStream &out, QString command) {
     out << "answer <questionnaire_number>\nStart answering questionnaire\n\n";
   } else if (command == "create") {
     out << "create <questionnaire_name>\nCreate a questionnaire\n\n";
+  } else if (command == "path") {
+    out << "path <questionnaire_number>\nDisplay questionnaire file path\n\n";
   } else if (command == "exit") {
     out << "exit\nExit hinotori\n\n";
   } else {
     out << "help <command>\nAvailable commands:"
-           "\nquestionnaires\nquestions\nanswer\ncreate\nexit\n\n";
+           "\nquestionnaires\nquestions\nanswer\ncreate\npath\nexit\n\n";
   }
 }
 
