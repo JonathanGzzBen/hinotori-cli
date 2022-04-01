@@ -26,13 +26,13 @@ private:
 
   QList<QSharedPointer<Questionnaire>> LoadQuestionnaires() const;
   QSharedPointer<Questionnaire>
-  LoadQuestionnaire(quint8 questionnaire_number) const;
+  LoadQuestionnaire(uint questionnaire_number) const;
 
   void DisplayQuestionnaires(QTextStream &out) const;
-  void DisplayQuestions(QTextStream &out, quint8 questionnaire_number) const;
-  void AnswerQuestionnaire(QTextStream &out, quint8 questionnaire_number) const;
+  void DisplayQuestions(QTextStream &out, uint questionnaire_number) const;
+  void AnswerQuestionnaire(QTextStream &out, uint questionnaire_number) const;
   void CreateQuestionnaire(QTextStream &out, QString filename) const;
-  void DisplayPath(QTextStream &out, QString questionnaire_number) const;
+  void DisplayPath(QTextStream &out, uint questionnaire_number) const;
   void DisplayHelp(QTextStream &out, QString command) const;
 
   static bool AnswerQuestion(QTextStream &out,

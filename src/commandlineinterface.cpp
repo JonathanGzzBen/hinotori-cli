@@ -20,7 +20,6 @@ void CommandLineInterface::Start() {
       } else {
         DisplayQuestionnaires(out);
       }
-      linenoiseHistoryAdd(line.toStdString().c_str());
     } else if (line.startsWith("questions")) {
       bool ok;
       auto questionnaire_number{line.sliced(9).toUInt(&ok)};
@@ -28,7 +27,6 @@ void CommandLineInterface::Start() {
         out << "Expected numeric argument <questionnaire_number>\n\n";
       } else {
         DisplayQuestions(out, questionnaire_number);
-        linenoiseHistoryAdd(line.toStdString().c_str());
       }
     } else if (line.startsWith("answer")) {
       bool ok;
@@ -38,7 +36,6 @@ void CommandLineInterface::Start() {
       } else {
         out << "Answering questionnaire " << questionnaire_number << "\n";
         AnswerQuestionnaire(out, questionnaire_number);
-        linenoiseHistoryAdd(line.toStdString().c_str());
       }
     } else if (line.startsWith("create")) {
       QString input_filename{line.sliced(6)};
@@ -51,7 +48,13 @@ void CommandLineInterface::Start() {
                                      : input_filename + ".json");
       }
     } else if (line.startsWith("path")) {
-      DisplayPath(out, line.sliced(4));
+      bool ok;
+      auto questionnaire_number{line.sliced(4).toUInt(&ok)};
+      if (!ok) {
+        out << "Expected numeric argument <questionnaire_number>\n\n";
+      } else {
+        DisplayPath(out, questionnaire_number);
+      }
     } else if (line.startsWith("help")) {
       DisplayHelp(out, line.sliced(4));
     } else if (line.startsWith("clear")) {
@@ -103,7 +106,7 @@ char *CommandLineInterface::Hints(const char *buf, int *color, int *bold) {
                      "exit"};
   for (const auto &hint : hints) {
     if (hint.startsWith(buf)) {
-      static char *hint_substring;
+      char *hint_substring;
       std::strncpy(hint_substring,
                    hint.sliced(strlen(buf)).toStdString().c_str(),
                    hint.length() - strlen(buf) + 1);
@@ -130,19 +133,19 @@ CommandLineInterface::LoadQuestionnaires() const {
 }
 
 QSharedPointer<Questionnaire>
-CommandLineInterface::LoadQuestionnaire(quint8 questionnaire_number) const {
+CommandLineInterface::LoadQuestionnaire(uint questionnaire_number) const {
   const auto questionnaires{LoadQuestionnaires()};
-  if (questionnaires.empty()) {
-    return nullptr;
+  if (0 < questionnaire_number &&
+      questionnaire_number <= questionnaires.length()) {
+    return questionnaires.at(questionnaire_number - 1);
   }
-  return questionnaires.at(questionnaire_number - 1);
+  return nullptr;
 }
 
 void CommandLineInterface::DisplayQuestionnaires(QTextStream &out) const {
   const auto questionnaires{LoadQuestionnaires()};
   if (questionnaires.empty()) {
     out << "No data found in " << k_data_directory_.path() << "\n";
-    out.flush();
     return;
   }
   out << "Questionnaires in: " << k_data_directory_.path() << "\n";
@@ -155,15 +158,13 @@ void CommandLineInterface::DisplayQuestionnaires(QTextStream &out) const {
         << "\n";
   }
   out << "\n";
-  out.flush();
 }
 
 void CommandLineInterface::DisplayQuestions(QTextStream &out,
-                                            quint8 questionnaire_number) const {
+                                            uint questionnaire_number) const {
   const auto questionnaire{LoadQuestionnaire(questionnaire_number)};
   if (!questionnaire) {
     out << "No questionnaire with that number found\n";
-    out.flush();
     return;
   }
   out << "\n" << questionnaire->Title() << "\n\n";
@@ -185,11 +186,11 @@ void CommandLineInterface::DisplayQuestions(QTextStream &out,
 }
 
 void CommandLineInterface::AnswerQuestionnaire(
-    QTextStream &out, quint8 questionnaire_number) const {
+    QTextStream &out, uint questionnaire_number) const {
   auto questionnaire{LoadQuestionnaire(questionnaire_number)};
   if (!questionnaire) {
-    out << "Cannot answer, no questionnaire with that number found\n";
-    out.flush();
+    out << "Cannot answer, questionnaire number " << questionnaire_number
+        << " not found\n";
     return;
   }
   out << "\n" << questionnaire->Title() << "\n";
@@ -214,7 +215,6 @@ void CommandLineInterface::AnswerQuestionnaire(
     }
     if (exit) {
       out << "Stopped answering questionnaire.\n\n";
-      out.flush();
       return;
     }
   }
@@ -226,7 +226,6 @@ void CommandLineInterface::AnswerQuestionnaire(
     }
     out << "]\n";
   }
-  out.flush();
 }
 
 void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
@@ -255,23 +254,14 @@ void CommandLineInterface::CreateQuestionnaire(QTextStream &out,
 }
 
 void CommandLineInterface::DisplayPath(QTextStream &out,
-                                       QString questionnaire_number) const {
-  bool ok;
-  auto questionnaire_number_uint = questionnaire_number.toUInt(&ok);
-  if (!ok) {
-    out << "Questionnaire number must be a valid number\n\n";
+                                       uint questionnaire_number) const {
+  auto questionnaire{LoadQuestionnaire(questionnaire_number)};
+  if (!questionnaire) {
+    out << "Questionnaire number " << questionnaire_number << " not found\n\n";
     return;
   }
-  auto questionnaires{LoadQuestionnaires()};
-  for (uint i{0}; i < questionnaires.length(); ++i) {
-    if (i + 1 == questionnaire_number_uint) {
-      out << k_data_directory_.path() + QDir::separator() +
-                 questionnaires[i].get()->Title() + "\n\n";
-      return;
-    }
-  }
-  out << "Questionnaire number " + questionnaire_number.trimmed() +
-             " not found\n\n";
+  out << k_data_directory_.path() + QDir::separator() + questionnaire->Title() +
+             "\n\n";
 }
 
 void CommandLineInterface::DisplayHelp(QTextStream &out,
